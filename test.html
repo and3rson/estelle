@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Estelle test</title>
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.cosmo.min.css" />
+        <style type="text/css">
+            html, body {
+                height: 100%;
+                min-height: 100%;
+            }
+            .compile {
+                position: absolute;
+                top: 50%;
+                margin-top: -5rem;
+                left: 0;
+                width: 100%;
+                height: 10rem;
+            }
+            .container {
+                height: 80%;
+                margin-top: 3rem;
+            }
+            .row, .col-md-2, .col-md-5 {
+                height: 100%;
+            }
+            .half {
+                height: 50%;
+            }
+            .full {
+                height: 100%;
+            }
+            .relative {
+                position: relative;
+            }
+            textarea.form-control {
+                height: 100%;
+            }
+            textarea {
+                font-family: Consolas, Monospace;
+            }
+            [data-title]:after {
+                content: attr(data-title);
+                position: absolute;
+                z-index: 10;
+                top: 0;
+                right: 0;
+                background: #222;
+                padding: 0.5rem;
+                color: #FFF;
+            }
+        </style>
+        <script type="text/javascript" src="./src/estelle.js"></script>
+        <script type="text/javascript">
+            var $$ = document.querySelector.bind(document);
+            window.addEventListener('load', function() {
+                var examples = document.querySelectorAll('[type="text/x-estelle-template"]');
+                var i;
+                for (i = 0; i < examples.length; i++) {
+                    var $example = examples[i];
+                    (function($example) {
+                        var name = $example.getAttribute('data-name');
+                        var src = $example.innerHTML;
+                        var ctx = $$('[data-scope-for="' + $example.id + '"]').innerHTML;
+                        var link = document.createElement('a');
+                        link.innerHTML = name;
+                        link.setAttribute('class', 'btn btn-default');
+                        link.onclick = function() {
+                            $$('.src').value = src.trim();
+                            $$('.ctx').value = ctx.trim();
+                        };
+                        var li = document.createElement('li');
+                        li.appendChild(link);
+                        $$('.examples').appendChild(li);
+                    })($example);
+                }
+                $$('.compile').addEventListener('click', function() {
+                    var start = new Date();
+                    var tpl = new Estelle($$('.src').value);
+                    var compileDiff = new Date() - start;
+                    var start = new Date();
+                    var result = tpl.render((new Function('return ' + $$('.ctx').value))());
+                    $$('.dest').value = result;
+                    var renderDiff = new Date() - start;
+                    $$('.debug').innerHTML = 'Compiled in ' + compileDiff + 'ms<br />Rendered in ' + renderDiff + 'ms';
+                });
+            });
+        </script>
+
+        <script id="variables-src" type="text/x-estelle-template" data-name="Variables">
+Foo equals <@ print foo @>.
+Bar.baz equals <@ print bar.baz @>
+This also works: <@= bar.baz @>
+And this too: <@ = bar.baz @>
+        </script>
+        <script type="text/x-estelle-context" data-scope-for="variables-src">
+{
+    foo: "Bar",
+    bar: {
+        baz: "This is baz."
+    }
+}
+        </script>
+
+        <script id="template-tags-src" type="text/x-estelle-template" data-name="Template tags">
+This is random number: <@ random @>.
+Today is <@ date @>.
+You can implement your own!
+        </script>
+        <script type="text/x-estelle-context" data-scope-for="template-tags-src"></script>
+
+        <script id="loops-src" type="text/x-estelle-template" data-name="Loops">
+List of users:
+<@ for user in users@>
+    Foo equals <@ print user @>
+<@ endfor @>
+
+User at index 1 is <@ = users[1] @>
+        </script>
+        <script type="text/x-estelle-context" data-scope-for="loops-src">
+{
+    users: ['Anderson', 'Victoria', 'Sas']
+}
+        </script>
+
+        <script id="with-src" type="text/x-estelle-template" data-name="Scope limiting">
+<@ with user @>
+    User name: <@ = name @>.
+    User age: <@ = age @>.
+<@ endwith @>
+        </script>
+        <script type="text/x-estelle-context" data-scope-for="with-src">
+{
+    user: {
+        name: 'Andrew',
+        age: 23
+    }
+}
+        </script>
+
+        <script id="inline-code-src" type="text/x-estelle-template" data-name="Inline JS code">
+<@ for i in [1,2,3,4,5] @>
+    Variable "i" equals <@ = i @>
+<@ endfor @>
+
+User name length at index 2 is <@ = users[2].length @>
+        </script>
+        <script type="text/x-estelle-context" data-scope-for="inline-code-src">
+{
+    users: ['Anderson', 'Victoria', 'Sas']
+}
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="navbar navbar-default"><a class="navbar-brand" href="#">Examples:</a><ul class="examples navbar-nav"></ul></div>
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="half relative" data-title="Source">
+                        <textarea class="src form-control half"></textarea>
+                    </div>
+                    <div class="half relative" data-title="Context">
+                        <textarea class="ctx form-control half"></textarea>
+                    </div>
+                </div>
+                <div class="col-md-2 relative">
+                    <input type="button" class="compile btn btn-default" value="Compile" />
+                    <div class="debug"></div>
+                </div>
+                <div class="col-md-5">
+                    <div class="full relative" data-title="Result">
+                        <textarea class="dest form-control full" data-title="Resul"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
